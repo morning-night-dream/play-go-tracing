@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  labels:
+    app: app2
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+          app: app2
+    template:
+        metadata:
+          labels:
+              app: app2
+        spec:
+          containers:
+          - name: app2
+            image: "{{ .Values.image.organization }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            imagePullPolicy: Always
+            ports:
+            - containerPort: 8080
+            env:
+            - name: API_SERVER_URL
+              value: http://app1:80
+          - name: agent
+            image: otel/opentelemetry-collector:0.18.0
+            args:
+            - --config=/conf/agent.yaml
+            volumeMounts:
+            - mountPath: /conf
+              name: agent-config
+          volumes:
+          - configMap:
+              items:
+              - key: agent.yaml
+                path: agent.yaml
+              name: agent-config
+            name: agent-config
